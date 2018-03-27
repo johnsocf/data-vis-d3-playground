@@ -17,12 +17,13 @@ const data = [
   {name: 'B', yVal: 2},
   {name: 'C', yVal: 3},
   {name: 'D', yVal: 4}
-
 ]
+
+const newData = [25, 20, 10, 12, 15];
 
 @Component({
   selector: 'app-d3graph',
-  template: '<svg id="canvas" width="400" height="60"></svg>'
+  template: '<div id="canvas" width="400" height="60"></div>'
 })
 export class D3graphComponent implements OnInit {
   private d3: D3;
@@ -49,7 +50,7 @@ export class D3graphComponent implements OnInit {
     let data: {name: string, yVal: number}[] = [];
     let padding: number = 25;
     let width: number = 500;
-    let height: number = 150;
+    let height: number = 500;
     let xScale: any;
     let yScale: any;
     let xColor: any;
@@ -68,6 +69,22 @@ export class D3graphComponent implements OnInit {
         .attr('width', 150)
         .attr('height', 60)
         .attr('fill', 'blue')
+
+      var circles = svg.selectAll('circle')
+        .data(newData);
+
+    circles.enter()
+      .append('circle')
+        .attr('cx', (d, i) => {
+          console.log('item'+ d, 'index:' + i)
+          return 50 + i * 50;
+        })
+        .attr('cy', 100)
+        .attr('r', (d) => {
+          console.log('item ' + d);
+          return d;
+        })
+        .attr('fill', 'pink')
     }
 
   }
