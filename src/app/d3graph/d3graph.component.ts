@@ -31,6 +31,7 @@ export class D3graphComponent implements OnInit {
   private parentNativeElement: any;
   private d3Svg: Selection<SVGSVGElement, any, null, undefined>;
   data: any;
+  rectData: any;
   svg: any;
   width: number = 500;
   height: number = 500;
@@ -61,9 +62,10 @@ export class D3graphComponent implements OnInit {
     let yAxis: any;
 
     if (this.parentNativeElement !== null) {
-      this.setSVG()
+      this.setSVG();
       this.getAgesBuildCircles();
-      this.appendRect()
+      this.appendRect();
+      this.getBuildingsBuildRectangles();
     }
 
   }
@@ -89,11 +91,41 @@ export class D3graphComponent implements OnInit {
     },error =>{console.log('Error')});
   }
 
+  getBuildingsBuildRectangles() {
+    this.http.get<any[]>('../assets/data/buildings.json').subscribe(res =>{
+      //let o = res.json();
+      console.log('data', res)
+      this.rectData = res;
+      this.rectData.forEach(d => {
+        d.height = +d.height;
+      })
+      this.buildRectangles();
+    },error =>{console.log('Error')});
+  }
+
   setSVG() {
     this.svg = this.d3.select(this.parentNativeElement)
       .append('svg')
       .attr('width', this.width)
       .attr('height', this.height)
+  }
+
+  buildRectangles() {
+    var rectangles = this.svg.selectAll('rect')
+      .data(this.rectData);
+
+    rectangles.enter()
+      .append('rect')
+      .attr('x', (d, i) =>{
+        return 230 + 30 * i;
+      })
+      .attr('y', 0)
+      .attr('width', 25)
+      .attr('height', d => {
+        return d.height;
+      })
+      .attr('fill', 'blue')
+
   }
 
   buildCircles() {
@@ -120,5 +152,6 @@ export class D3graphComponent implements OnInit {
         }
       })
   }
+
 
 }
