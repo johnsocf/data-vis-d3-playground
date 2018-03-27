@@ -1,4 +1,5 @@
 import { Component, OnInit, ElementRef, NgZone } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {
   D3Service,
   D3,
@@ -29,11 +30,14 @@ export class D3graphComponent implements OnInit {
   private d3: D3;
   private parentNativeElement: any;
   private d3Svg: Selection<SVGSVGElement, any, null, undefined>;
+  data: any;
+  svg: any
 
   constructor(
     element: ElementRef,
     private ngZone: NgZone,
-    d3Service: D3Service
+    d3Service: D3Service,
+    private http: HttpClient
   ) {
     this.d3 = d3Service.getD3();
     console.log('this d3', this.d3)
@@ -58,35 +62,58 @@ export class D3graphComponent implements OnInit {
     let yAxis: any;
 
     if (this.parentNativeElement !== null) {
-      svg = d3.select(this.parentNativeElement)
+      this.svg = d3.select(this.parentNativeElement)
         .append('svg')
         .attr('width', width)
         .attr('height', height)
 
-      var rect = svg.append('rect')
+      this.http.get<any[]>('../assets/data/ages.json').subscribe(res =>{
+        //let o = res.json();
+        console.log('data', res)
+        this.data = res;
+        this.data.forEach(d => {
+          d.age = +d.age;
+        })
+        this.buildCircles();
+      },error =>{console.log('Error')});
+
+      var rect = this.svg.append('rect')
         .attr('x', 25)
         .attr('y', 0)
         .attr('width', 150)
         .attr('height', 60)
         .attr('fill', 'blue')
 
-      var circles = svg.selectAll('circle')
-        .data(newData);
+
+
+
+    }
+
+  }
+
+  buildCircles() {
+    var circles = this.svg.selectAll('circle')
+      .data(this.data);
+
 
     circles.enter()
       .append('circle')
-        .attr('cx', (d, i) => {
-          console.log('item'+ d, 'index:' + i)
-          return 50 + i * 50;
-        })
-        .attr('cy', 100)
-        .attr('r', (d) => {
-          console.log('item ' + d);
-          return d;
-        })
-        .attr('fill', 'pink')
-    }
-
+      .attr('cx', (d, i) => {
+        console.log('item'+ d, 'index:' + i)
+        return 50 + i * 50;
+      })
+      .attr('cy', 100)
+      .attr('r', (d) => {
+        console.log('item ' + d);
+        return d.age * 2;
+      })
+      .attr('fill', d =>{
+        if (d.name == 'Tony') {
+          return 'blue'
+        } else {
+          return 'pink'
+        }
+      })
   }
 
 }

@@ -6,7 +6,7 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import {D3Service} from "d3-ng2-service";
 import { D3graphComponent } from './d3graph/d3graph.component';
-
+import { HttpClientModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -17,7 +17,8 @@ import { D3graphComponent } from './d3graph/d3graph.component';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+    HttpClientModule
   ],
   providers: [D3Service],
   bootstrap: [AppComponent]
