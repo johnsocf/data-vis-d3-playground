@@ -31,7 +31,9 @@ export class D3graphComponent implements OnInit {
   private parentNativeElement: any;
   private d3Svg: Selection<SVGSVGElement, any, null, undefined>;
   data: any;
-  svg: any
+  svg: any;
+  width: number = 500;
+  height: number = 500;
 
   constructor(
     element: ElementRef,
@@ -46,15 +48,12 @@ export class D3graphComponent implements OnInit {
 
   ngOnInit() {
     let self = this;
-    let d3 = this.d3;
-    let svg: any;
     let name: string;
     let vVal: number;
     let colors: any = [];
     let data: {name: string, yVal: number}[] = [];
     let padding: number = 25;
-    let width: number = 500;
-    let height: number = 500;
+
     let xScale: any;
     let yScale: any;
     let xColor: any;
@@ -62,33 +61,39 @@ export class D3graphComponent implements OnInit {
     let yAxis: any;
 
     if (this.parentNativeElement !== null) {
-      this.svg = d3.select(this.parentNativeElement)
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height)
-
-      this.http.get<any[]>('../assets/data/ages.json').subscribe(res =>{
-        //let o = res.json();
-        console.log('data', res)
-        this.data = res;
-        this.data.forEach(d => {
-          d.age = +d.age;
-        })
-        this.buildCircles();
-      },error =>{console.log('Error')});
-
-      var rect = this.svg.append('rect')
-        .attr('x', 25)
-        .attr('y', 0)
-        .attr('width', 150)
-        .attr('height', 60)
-        .attr('fill', 'blue')
-
-
-
-
+      this.setSVG()
+      this.getAgesBuildCircles();
+      this.appendRect()
     }
 
+  }
+
+  appendRect() {
+    var rect = this.svg.append('rect')
+      .attr('x', 25)
+      .attr('y', 0)
+      .attr('width', 150)
+      .attr('height', 60)
+      .attr('fill', 'blue')
+  }
+
+  getAgesBuildCircles() {
+    this.http.get<any[]>('../assets/data/ages.json').subscribe(res =>{
+      //let o = res.json();
+      console.log('data', res)
+      this.data = res;
+      this.data.forEach(d => {
+        d.age = +d.age;
+      })
+      this.buildCircles();
+    },error =>{console.log('Error')});
+  }
+
+  setSVG() {
+    this.svg = this.d3.select(this.parentNativeElement)
+      .append('svg')
+      .attr('width', this.width)
+      .attr('height', this.height)
   }
 
   buildCircles() {
