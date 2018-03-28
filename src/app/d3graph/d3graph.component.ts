@@ -124,7 +124,7 @@ export class D3graphComponent implements OnInit {
     let y = parseInt(extent[1])
     this.y = this.d3.scaleLinear()
       .domain([x, y])
-      .range([0, 400])
+      .range([this.height, 0])
 
   }
 
@@ -210,15 +210,10 @@ export class D3graphComponent implements OnInit {
 
     rectangles.enter()
       .append('rect')
-      .attr('x', (d, i) =>{
-        console.log('this x', this.x(i))
-        return this.x(d.name);
-      })
-      .attr('y', 0)
+      .attr('x', (d, i) =>{return this.x(d.name)})
+      .attr('y', d => {return this.y(d.height)})
       .attr('width', this.x.bandwidth)
-      .attr('height', d => {
-        return this.y(d.height);
-      })
+      .attr('height', d => {return this.height - this.y(d.height)})
       .attr('fill', 'blue')
 
   }
