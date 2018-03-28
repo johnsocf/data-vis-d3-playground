@@ -12,6 +12,7 @@ import {
   Selection,
   Transition
 } from 'd3-ng2-service';
+import * as _ from 'lodash';
 
 const data = [
   {name: 'A', yVal: 1},
@@ -33,8 +34,13 @@ export class D3graphComponent implements OnInit {
   data: any;
   rectData: any;
   svg: any;
-  width: number = 500;
-  height: number = 500;
+  width: number = 400;
+  height: number = 400;
+  y: any;
+  x: any;
+  color: any;
+  countryDomain = ["Africa", "N.America", "Europe",
+    "S. America", "Asia", "Australia"];
 
   constructor(
     element: ElementRef,
@@ -43,7 +49,6 @@ export class D3graphComponent implements OnInit {
     private http: HttpClient
   ) {
     this.d3 = d3Service.getD3();
-    console.log('this d3', this.d3)
     this.parentNativeElement = element.nativeElement;
   }
 
@@ -63,10 +68,37 @@ export class D3graphComponent implements OnInit {
 
     if (this.parentNativeElement !== null) {
       this.setSVG();
-      this.getAgesBuildCircles();
-      this.appendRect();
+      this.setOrdinalScale();
+      this.buildScales();
+      //this.scaleBand();
+
+      //this.appendRect();
       this.getBuildingsBuildRectangles();
+      this.getAgesBuildCircles();
+
     }
+
+  }
+
+  scaleBand() {
+    this.x = this.d3.scaleBand()
+      .domain(this.countryDomain)
+      .range([0, 400])
+      .paddingInner(0.3)
+      .paddingOuter(0.3)
+  }
+
+  setOrdinalScale() {
+    this.color = this.d3.scaleOrdinal()
+      .domain(this.countryDomain)
+      .range(this.d3.schemeCategory10);
+
+  }
+
+  buildScales() {
+    this.y = this.d3.scaleLinear()
+      .domain([0, 828])
+      .range([0, 400])
 
   }
 
@@ -81,8 +113,6 @@ export class D3graphComponent implements OnInit {
 
   getAgesBuildCircles() {
     this.http.get<any[]>('../assets/data/ages.json').subscribe(res =>{
-      //let o = res.json();
-      console.log('data', res)
       this.data = res;
       this.data.forEach(d => {
         d.age = +d.age;
@@ -93,12 +123,13 @@ export class D3graphComponent implements OnInit {
 
   getBuildingsBuildRectangles() {
     this.http.get<any[]>('../assets/data/buildings.json').subscribe(res =>{
-      //let o = res.json();
-      console.log('data', res)
       this.rectData = res;
       this.rectData.forEach(d => {
         d.height = +d.height;
       })
+      this.countryDomain = _.map(this.rectData, 'name');
+      this.scaleBand();
+      console.log('country domain', this.countryDomain);
       this.buildRectangles();
     },error =>{console.log('Error')});
   }
@@ -117,12 +148,13 @@ export class D3graphComponent implements OnInit {
     rectangles.enter()
       .append('rect')
       .attr('x', (d, i) =>{
-        return 230 + 30 * i;
+        console.log('this x', this.x(d.name))
+        return this.x(d.name);
       })
       .attr('y', 0)
-      .attr('width', 25)
+      .attr('width', this.x.bandwidth)
       .attr('height', d => {
-        return d.height;
+        return this.y(d.height);
       })
       .attr('fill', 'blue')
 
@@ -136,12 +168,10 @@ export class D3graphComponent implements OnInit {
     circles.enter()
       .append('circle')
       .attr('cx', (d, i) => {
-        console.log('item'+ d, 'index:' + i)
         return 50 + i * 50;
       })
       .attr('cy', 100)
       .attr('r', (d) => {
-        console.log('item ' + d);
         return d.age * 2;
       })
       .attr('fill', d =>{
