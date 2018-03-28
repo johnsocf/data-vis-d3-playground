@@ -21,6 +21,7 @@ const data = [
   {name: 'D', yVal: 4}
 ]
 
+
 const newData = [25, 20, 10, 12, 15];
 
 @Component({
@@ -34,6 +35,11 @@ export class D3graphComponent implements OnInit {
   data: any;
   rectData: any;
   svg: any;
+  g: any;
+  xAxisCall: any;
+  yAxisCall: any;
+
+  margin = {top: 20, right: 10, bottom: 80, left: 50};
   width: number = 400;
   height: number = 400;
   y: any;
@@ -122,15 +128,6 @@ export class D3graphComponent implements OnInit {
 
   }
 
-  appendRect() {
-    var rect = this.svg.append('rect')
-      .attr('x', 25)
-      .attr('y', 0)
-      .attr('width', 150)
-      .attr('height', 60)
-      .attr('fill', 'blue')
-  }
-
   getAgesBuildCircles() {
     this.http.get<any[]>('../assets/data/ages.json').subscribe(res =>{
       this.data = res;
@@ -147,22 +144,46 @@ export class D3graphComponent implements OnInit {
       this.rectData.forEach(d => {
         d.height = +d.height;
       })
+
       this.setMinAndMax();
       this.scaleBand();
       this.buildScales();
+      this.generateAxises()
       this.buildRectangles();
     },error =>{console.log('Error')});
+  }
+
+  generateAxises() {
+    this.xAxisCall = this.d3.axisBottom(this.x);
+
+    this.g.append('g')
+      .attr('class', 'x-axis')
+      .attr('transform', 'translate(0,' + this.height + ')')
+      .call(this.xAxisCall)
+      .selectAll("text")
+        .attr("y", '10')
+        .attr("x", '-5')
+        .attr("text-anchor", "end")
+        .attr("transform", "rotate(-40)");
+
+    this.yAxisCall = this.d3.axisLeft(this.y);
+
+    this.g.append('g')
+      .attr('class', 'y-axis')
+      .call(this.yAxisCall)
   }
 
   setSVG() {
     this.svg = this.d3.select(this.parentNativeElement)
       .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height)
+      .attr('width', this.width + this.margin.left + this.margin.right)
+      .attr('height', this.height + this.margin.top + this.margin.bottom)
+    this.g = this.svg.append('g')
+      .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')')
   }
 
   buildRectangles() {
-    var rectangles = this.svg.selectAll('rect')
+    var rectangles = this.g.selectAll('rect')
       .data(this.rectData);
 
     rectangles.enter()
@@ -181,7 +202,7 @@ export class D3graphComponent implements OnInit {
   }
 
   buildCircles() {
-    var circles = this.svg.selectAll('circle')
+    var circles = this.g.selectAll('circle')
       .data(this.data);
 
 
