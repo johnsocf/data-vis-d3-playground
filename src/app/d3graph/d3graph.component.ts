@@ -41,6 +41,9 @@ export class D3graphComponent implements OnInit {
   color: any;
   countryDomain = ["Africa", "N.America", "Europe",
     "S. America", "Asia", "Australia"];
+  min: any;
+  max: any;
+  extent: any;
 
   constructor(
     element: ElementRef,
@@ -68,9 +71,9 @@ export class D3graphComponent implements OnInit {
 
     if (this.parentNativeElement !== null) {
       this.setSVG();
+
       this.setOrdinalScale();
-      this.buildScales();
-      //this.scaleBand();
+
 
       //this.appendRect();
       this.getBuildingsBuildRectangles();
@@ -80,9 +83,23 @@ export class D3graphComponent implements OnInit {
 
   }
 
+  setMinAndMax() {
+    this.min = this.d3.min(this.rectData, d => {
+      return d['height'];
+    });
+    this.max = this.d3.max(this.rectData, d => {
+      return d['height'];
+    })
+    this.extent = this.d3.extent(this.rectData, d => {
+      return d['height'];
+    })
+  }
+
   scaleBand() {
+    let countryDomain = this.rectData.map(d => { return d.name});
+    console.log('country domain', countryDomain)
     this.x = this.d3.scaleBand()
-      .domain(this.countryDomain)
+      .domain(this.rectData.map(d => { return d.name}))
       .range([0, 400])
       .paddingInner(0.3)
       .paddingOuter(0.3)
@@ -96,8 +113,11 @@ export class D3graphComponent implements OnInit {
   }
 
   buildScales() {
+    let extent = this.d3.extent(this.rectData, d => {return d['height']});
+    let x = parseInt(extent[0])
+    let y = parseInt(extent[1])
     this.y = this.d3.scaleLinear()
-      .domain([0, 828])
+      .domain([x, y])
       .range([0, 400])
 
   }
@@ -127,9 +147,9 @@ export class D3graphComponent implements OnInit {
       this.rectData.forEach(d => {
         d.height = +d.height;
       })
-      this.countryDomain = _.map(this.rectData, 'name');
+      this.setMinAndMax();
       this.scaleBand();
-      console.log('country domain', this.countryDomain);
+      this.buildScales();
       this.buildRectangles();
     },error =>{console.log('Error')});
   }
@@ -148,7 +168,7 @@ export class D3graphComponent implements OnInit {
     rectangles.enter()
       .append('rect')
       .attr('x', (d, i) =>{
-        console.log('this x', this.x(d.name))
+        console.log('this x', this.x(i))
         return this.x(d.name);
       })
       .attr('y', 0)
