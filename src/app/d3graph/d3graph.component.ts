@@ -39,7 +39,7 @@ export class D3graphComponent implements OnInit {
   xAxisCall: any;
   yAxisCall: any;
 
-  margin = {top: 20, right: 10, bottom: 80, left: 50};
+  margin = {top: 20, right: 10, bottom: 150, left: 100};
   width: number = 400;
   height: number = 400;
   y: any;
@@ -148,9 +148,31 @@ export class D3graphComponent implements OnInit {
       this.setMinAndMax();
       this.scaleBand();
       this.buildScales();
-      this.generateAxises()
+      this.generateAxises();
+
       this.buildRectangles();
+      this.generateLabels();
     },error =>{console.log('Error')});
+  }
+
+  generateLabels() {
+    console.log('labels')
+    this.g.append("text")
+      .attr('class', 'x axis-label')
+      .attr('x', this.width/ 2)
+      .attr('y', this.height + 140)
+      .attr('font-size', '20px')
+      .attr('text-anchor', 'middle')
+      .text('the worlds tallest buildings');
+
+    this.g.append('text')
+      .attr('class', 'y axis-label')
+      .attr('x', -(this.height/ 2))
+      .attr('y', -60)
+      .attr('font-size', '20px')
+      .attr('text-anchor', 'middle')
+      .attr('transform', 'rotate(-90)')
+      .text('Height (m)');
   }
 
   generateAxises() {
