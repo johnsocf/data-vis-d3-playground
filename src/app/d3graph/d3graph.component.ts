@@ -74,7 +74,7 @@ export class D3graphComponent implements OnInit {
 
       //this.appendRect();
       this.getBuildingsBuildRectangles();
-      this.getAgesBuildCircles();
+      //this.getAgesBuildCircles();
 
     }
 

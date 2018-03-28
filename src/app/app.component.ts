@@ -7,10 +7,9 @@ import * as d3 from "d3";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app works!';
+  title = 'd3 workings!';
 
   ngAfterContentInit() {
-    d3.select("p").style("color", "green");
     d3.select("h1").style("color", "pink");
   }
 }
