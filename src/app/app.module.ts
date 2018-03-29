@@ -7,12 +7,14 @@ import { AppComponent } from './app.component';
 import {D3Service} from "d3-ng2-service";
 import { D3graphComponent } from './d3graph/d3graph.component';
 import { HttpClientModule } from '@angular/common/http';
+import { RevBarGraphComponent } from './rev-bar-graph/rev-bar-graph.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    D3graphComponent
+    D3graphComponent,
+    RevBarGraphComponent
   ],
   imports: [
     BrowserModule,

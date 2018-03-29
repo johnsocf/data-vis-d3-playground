@@ -14,21 +14,13 @@ import {
 } from 'd3-ng2-service';
 import * as _ from 'lodash';
 
-const data = [
-  {name: 'A', yVal: 1},
-  {name: 'B', yVal: 2},
-  {name: 'C', yVal: 3},
-  {name: 'D', yVal: 4}
-]
-
-
-const newData = [25, 20, 10, 12, 15];
-
 @Component({
-  selector: 'app-d3graph',
-  template: '<div id="canvas" width="400" height="60"></div>'
+  selector: 'app-rev-bar-graph',
+  template: '<div id="canvas" width="400" height="60"></div>',
+  styleUrls: ['./rev-bar-graph.component.css']
 })
-export class D3graphComponent implements OnInit {
+export class RevBarGraphComponent implements OnInit {
+
   private d3: D3;
   private parentNativeElement: any;
   private d3Svg: Selection<SVGSVGElement, any, null, undefined>;
@@ -67,14 +59,8 @@ export class D3graphComponent implements OnInit {
 
     if (this.parentNativeElement !== null) {
       this.setSVG();
-
       this.setOrdinalScale();
-
-
-      //this.appendRect();
-      this.getBuildingsBuildRectangles();
-      //this.getAgesBuildCircles();
-
+      this.getRevenuesBuildRectangles();
     }
 
   }
@@ -99,7 +85,7 @@ export class D3graphComponent implements OnInit {
   }
 
   buildScaleBandDomain() {
-    this.x.domain(this.rectData.map(d => { return d.name}));
+    this.x.domain(this.rectData.map(d => { return d.month}));
   }
 
   setOrdinalScale() {
@@ -115,50 +101,27 @@ export class D3graphComponent implements OnInit {
   }
 
   buildScaleDomain() {
-    let extent = this.d3.extent(this.rectData, d => {return d['height']});
-    let x = parseInt(extent[0])
-    let y = parseInt(extent[1])
+    let extent = this.d3.extent(this.rectData, d => {return d['revenue']});
+    let x = parseInt(extent[0]);
+    let y = parseInt(extent[1]);
     this.y.domain([x, y]);
   }
 
-  getAgesBuildCircles() {
-    this.http.get<any[]>('../assets/data/ages.json').subscribe(res =>{
-      this.data = res;
-      this.data.forEach(d => {
-        d.age = +d.age;
-      })
-      this.buildCircles();
-    },error =>{console.log('Error')});
-  }
-
-  getBuildingsBuildRectangles() {
-    this.http.get<any[]>('../assets/data/buildings.json').subscribe(res =>{
-      this.rectData = res;
-      this.rectData.forEach(d => {
-        d.height = +d.height;
-      })
-      this.buildScales();
-      this.scaleBand();
-      this.generateAxises();
-      this.d3.interval(d => {
-        this.update();
-      }, 1000);
-
-    },error =>{console.log('Error')});
-  }
 
   getRevenuesBuildRectangles() {
     this.http.get<any[]>('../assets/data/revenues.json').subscribe(res =>{
       this.rectData = res;
       this.rectData.forEach(d => {
         d.revenue = +d.revenue;
-      })
+      });
+      console.log('this rect data', this.rectData);
       this.buildScales();
       this.scaleBand();
       this.generateAxises();
       this.d3.interval(d => {
         this.update();
       }, 1000);
+      this.generateLabels();
 
     },error =>{console.log('Error')});
   }
@@ -169,9 +132,8 @@ export class D3graphComponent implements OnInit {
     this.buildScaleBandDomain();
     this.buildScaleDomain();
     this.generateAxisesCalls();
-
     this.buildRectangles();
-    this.generateLabels();
+
   }
 
 
@@ -183,7 +145,7 @@ export class D3graphComponent implements OnInit {
       .attr('y', this.height + 140)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
-      .text('the worlds tallest buildings');
+      .text('revenue');
 
     this.g.append('text')
       .attr('class', 'y axis-label')
@@ -192,7 +154,7 @@ export class D3graphComponent implements OnInit {
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
-      .text('Height (m)');
+      .text('revenue (m)');
   }
 
   generateAxises() {
@@ -210,7 +172,7 @@ export class D3graphComponent implements OnInit {
   generateAxisesCalls() {
     this.yAxisGroup.call(this.yAxisCall);
     this.xAxisGroup.call(this.xAxisCall)
-    .selectAll("text")
+      .selectAll("text")
       .attr("y", '10')
       .attr("x", '-5')
       .attr("text-anchor", "end")
@@ -242,10 +204,12 @@ export class D3graphComponent implements OnInit {
     // enter
     rectangles.enter()
       .append('rect')
-      .attr('x', (d, i) =>{return this.x(d.name)})
-      .attr('y', d => {return this.y(d.height)})
+      .attr('x', (d, i) => {return this.x(d.month)})
+      .attr('y', d => {
+        console.log('revenue', d.revenue)
+        return this.y(d.revenue)})
       .attr('width', this.x.bandwidth)
-      .attr('height', d => {return this.height - this.y(d.height)})
+      .attr('height', d => {return this.height - this.y(d.revenue)})
       .attr('fill', 'blue');
 
   }
@@ -265,7 +229,7 @@ export class D3graphComponent implements OnInit {
         return d.age * 2;
       })
       .attr('fill', d =>{
-        if (d.name == 'Tony') {
+        if (d.month == 'March') {
           return 'blue'
         } else {
           return 'pink'
