@@ -44,6 +44,10 @@ export class RevBarGraphComponent implements OnInit {
   extent: any;
   yAxisGroup: any;
   xAxisGroup: any;
+  yLabel: any;
+  xLabel: any;
+  flag: boolean = true;
+  valueType: string;
 
   constructor(
     element: ElementRef,
@@ -101,7 +105,7 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   buildScaleDomain() {
-    let extent = this.d3.extent(this.rectData, d => {return d['revenue']});
+    let extent = this.d3.extent(this.rectData, d => {return d[this.valueType]});
     let x = parseInt(extent[0]);
     let y = parseInt(extent[1]);
     this.y.domain([x, y]);
@@ -113,6 +117,7 @@ export class RevBarGraphComponent implements OnInit {
       this.rectData = res;
       this.rectData.forEach(d => {
         d.revenue = +d.revenue;
+        d.profit = +d.profit;
       });
       console.log('this rect data', this.rectData);
       this.buildScales();
@@ -120,6 +125,7 @@ export class RevBarGraphComponent implements OnInit {
       this.generateAxises();
       this.d3.interval(d => {
         this.update();
+        this.flag = !this.flag;
       }, 1000);
       this.generateLabels();
 
@@ -127,34 +133,40 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   update() {
+    this.valueType = this.flag ? 'revenue' : 'profit';
+    console.log('valueType', this.valueType);
     this.setMinAndMax();
 
     this.buildScaleBandDomain();
     this.buildScaleDomain();
     this.generateAxisesCalls();
     this.buildRectangles();
+    this.updateLabelText();
+  }
 
+  updateLabelText() {
+    this.yLabel.text(this.valueType);
   }
 
 
   generateLabels() {
     console.log('labels')
-    this.g.append("text")
+    this.xLabel = this.g.append("text")
       .attr('class', 'x axis-label')
       .attr('x', this.width/ 2)
       .attr('y', this.height + 140)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
-      .text('revenue');
+      .text(this.valueType);
 
-    this.g.append('text')
+    this.yLabel = this.g.append('text')
       .attr('class', 'y axis-label')
       .attr('x', -(this.height/ 2))
       .attr('y', -60)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
-      .text('revenue (m)');
+      .text(this.valueType + ' (m)');
   }
 
   generateAxises() {
@@ -199,6 +211,12 @@ export class RevBarGraphComponent implements OnInit {
 
     // update
     rectangles.attr('class', 'update')
+      .attr('x', (d, i) => {return this.x(d.month)})
+      .attr('y', d => {
+        console.log('revenue', d[this.valueType])
+        return this.y(d[this.valueType])})
+      .attr('width', this.x.bandwidth)
+      .attr('height', d => {return this.height - this.y(d[this.valueType])})
       .attr('fill', 'red');
 
     // enter
@@ -206,12 +224,11 @@ export class RevBarGraphComponent implements OnInit {
       .append('rect')
       .attr('x', (d, i) => {return this.x(d.month)})
       .attr('y', d => {
-        console.log('revenue', d.revenue)
-        return this.y(d.revenue)})
+        console.log('revenue', d[this.valueType])
+        return this.y(d[this.valueType])})
       .attr('width', this.x.bandwidth)
-      .attr('height', d => {return this.height - this.y(d.revenue)})
+      .attr('height', d => {return this.height - this.y(d[this.valueType])})
       .attr('fill', 'blue');
-
   }
 
   buildCircles() {
