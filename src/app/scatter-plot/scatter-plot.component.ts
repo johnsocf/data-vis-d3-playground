@@ -7,11 +7,11 @@ import {
 } from 'd3-ng2-service';
 
 @Component({
-  selector: 'app-rev-bar-graph',
-  template: '<div id="canvas" width="400" height="60"></div>',
-  styleUrls: ['./rev-bar-graph.component.css']
+  selector: 'app-scatter-plot',
+  templateUrl: './scatter-plot.component.html',
+  styleUrls: ['./scatter-plot.component.css']
 })
-export class RevBarGraphComponent implements OnInit {
+export class ScatterPlotComponent implements OnInit {
 
   private d3: D3;
   private parentNativeElement: any;
@@ -102,7 +102,7 @@ export class RevBarGraphComponent implements OnInit {
     let extent = this.d3.extent(this.newData, d => {return d[this.valueType]});
     let x = parseInt(extent[0]);
     let y = parseInt(extent[1]);
-    this.y.domain([x, y]);
+    this.y.domain([0, y]);
   }
 
 
@@ -153,16 +153,16 @@ export class RevBarGraphComponent implements OnInit {
   generateLabels() {
     this.xLabel = this.g.append("text")
       .attr('class', 'x axis-label')
-      .attr('x', this.width/ 2)
-      .attr('y', this.height + 140)
+      .attr('cx', this.width/ 2)
+      .attr('cy', this.height + 140)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
       .text(this.valueType);
 
     this.yLabel = this.g.append('text')
       .attr('class', 'y axis-label')
-      .attr('x', -(this.height/ 2))
-      .attr('y', -60)
+      .attr('cx', -(this.height/ 2))
+      .attr('cy', -60)
       .attr('font-size', '20px')
       .attr('text-anchor', 'middle')
       .attr('transform', 'rotate(-90)')
@@ -203,33 +203,29 @@ export class RevBarGraphComponent implements OnInit {
   buildRectangles() {
 
     // data join
-    var rectangles = this.g.selectAll('rect')
+    var circles = this.g.selectAll('circle')
       .data(this.newData, d => {
         return d.month;
       });
 
     // exit old elements
-    rectangles.exit()
+    circles.exit()
       .attr('fill', 'red')
     .transition(this.t)
-      .attr('y', this.y(0))
-      .attr('height', 0)
+      .attr('cy', this.y(0))
       .remove();
 
     // enter
-    rectangles.enter()
-      .append('rect')
-      .attr('y', d => this.y(0))
-      .attr('x', (d, i) => {return this.x(d.month)})
-      .attr('width', this.x.bandwidth)
-      .attr('height', 0)
+    circles.enter()
+      .append('circle')
+      .attr('cy', d => this.y(0))
+      .attr('cx', (d, i) => {return this.x(d.month) + this.x.bandwidth() / 2})
+      .attr('r', 5)
       .attr('fill', 'blue')
-      .merge(rectangles)
+      .merge(circles)
       .transition(this.t)
-          .attr('y', d => {return this.y(d[this.valueType])})
-          .attr('width', this.x.bandwidth)
-          .attr('x', (d, i) => {return this.x(d.month)})
-          .attr('height', d => {return this.height - this.y(d[this.valueType])})
+      .attr('cy', d => {return this.y(d[this.valueType])})
+      .attr('cx', (d, i) => {return this.x(d.month) + this.x.bandwidth() / 2})
 
   }
 
@@ -258,3 +254,4 @@ export class RevBarGraphComponent implements OnInit {
 
 
 }
+
