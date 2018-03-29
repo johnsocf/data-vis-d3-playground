@@ -50,6 +50,8 @@ export class D3graphComponent implements OnInit {
   min: any;
   max: any;
   extent: any;
+  yAxisGroup: any;
+  xAxisGroup: any;
 
   constructor(
     element: ElementRef,
@@ -62,18 +64,6 @@ export class D3graphComponent implements OnInit {
   }
 
   ngOnInit() {
-    let self = this;
-    let name: string;
-    let vVal: number;
-    let colors: any = [];
-    let data: {name: string, yVal: number}[] = [];
-    let padding: number = 25;
-
-    let xScale: any;
-    let yScale: any;
-    let xColor: any;
-    let xAxis: any;
-    let yAxis: any;
 
     if (this.parentNativeElement !== null) {
       this.setSVG();
@@ -102,13 +92,14 @@ export class D3graphComponent implements OnInit {
   }
 
   scaleBand() {
-    let countryDomain = this.rectData.map(d => { return d.name});
-    console.log('country domain', countryDomain)
     this.x = this.d3.scaleBand()
-      .domain(this.rectData.map(d => { return d.name}))
       .range([0, 400])
       .paddingInner(0.3)
       .paddingOuter(0.3)
+  }
+
+  buildScaleBandDomain() {
+    this.x.domain(this.rectData.map(d => { return d.name}));
   }
 
   setOrdinalScale() {
@@ -119,13 +110,15 @@ export class D3graphComponent implements OnInit {
   }
 
   buildScales() {
+    this.y = this.d3.scaleLinear()
+      .range([this.height, 0]);
+  }
+
+  buildScaleDomain() {
     let extent = this.d3.extent(this.rectData, d => {return d['height']});
     let x = parseInt(extent[0])
     let y = parseInt(extent[1])
-    this.y = this.d3.scaleLinear()
-      .domain([x, y])
-      .range([this.height, 0])
-
+    this.y.domain([x, y]);
   }
 
   getAgesBuildCircles() {
@@ -144,16 +137,27 @@ export class D3graphComponent implements OnInit {
       this.rectData.forEach(d => {
         d.height = +d.height;
       })
-
-      this.setMinAndMax();
-      this.scaleBand();
       this.buildScales();
+      this.scaleBand();
       this.generateAxises();
+      this.d3.interval(d => {
+        this.update();
+      }, 1000);
 
-      this.buildRectangles();
-      this.generateLabels();
     },error =>{console.log('Error')});
   }
+
+  update() {
+    this.setMinAndMax();
+
+    this.buildScaleBandDomain();
+    this.buildScaleDomain();
+    this.generateAxisesCalls();
+
+    this.buildRectangles();
+    this.generateLabels();
+  }
+
 
   generateLabels() {
     console.log('labels')
@@ -178,21 +182,23 @@ export class D3graphComponent implements OnInit {
   generateAxises() {
     this.xAxisCall = this.d3.axisBottom(this.x);
 
-    this.g.append('g')
+    this.xAxisGroup = this.g.append('g')
       .attr('class', 'x-axis')
       .attr('transform', 'translate(0,' + this.height + ')')
-      .call(this.xAxisCall)
-      .selectAll("text")
-        .attr("y", '10')
-        .attr("x", '-5')
-        .attr("text-anchor", "end")
-        .attr("transform", "rotate(-40)");
 
     this.yAxisCall = this.d3.axisLeft(this.y);
+    this.yAxisGroup = this.g.append('g')
+      .attr('class', 'y-axis');
+  }
 
-    this.g.append('g')
-      .attr('class', 'y-axis')
-      .call(this.yAxisCall)
+  generateAxisesCalls() {
+    this.yAxisGroup.call(this.yAxisCall);
+    this.xAxisGroup.call(this.xAxisCall)
+    .selectAll("text")
+      .attr("y", '10')
+      .attr("x", '-5')
+      .attr("text-anchor", "end")
+      .attr("transform", "rotate(-40)");
   }
 
   setSVG() {
@@ -205,16 +211,26 @@ export class D3graphComponent implements OnInit {
   }
 
   buildRectangles() {
+
+    // data join
     var rectangles = this.g.selectAll('rect')
       .data(this.rectData);
 
+    // exit old elements
+    rectangles.exit().remove();
+
+    // update
+    rectangles.attr('class', 'update')
+      .attr('fill', 'red');
+
+    // enter
     rectangles.enter()
       .append('rect')
       .attr('x', (d, i) =>{return this.x(d.name)})
       .attr('y', d => {return this.y(d.height)})
       .attr('width', this.x.bandwidth)
       .attr('height', d => {return this.height - this.y(d.height)})
-      .attr('fill', 'blue')
+      .attr('fill', 'blue');
 
   }
 
