@@ -9,6 +9,7 @@ import { D3graphComponent } from './d3graph/d3graph.component';
 import { HttpClientModule } from '@angular/common/http';
 import { RevBarGraphComponent } from './rev-bar-graph/rev-bar-graph.component';
 import { ScatterPlotComponent } from './scatter-plot/scatter-plot.component';
+import { MultiDimensionalComponent } from './multi-dimensional/multi-dimensional.component';
 
 
 @NgModule({
@@ -16,7 +17,8 @@ import { ScatterPlotComponent } from './scatter-plot/scatter-plot.component';
     AppComponent,
     D3graphComponent,
     RevBarGraphComponent,
-    ScatterPlotComponent
+    ScatterPlotComponent,
+    MultiDimensionalComponent
   ],
   imports: [
     BrowserModule,
