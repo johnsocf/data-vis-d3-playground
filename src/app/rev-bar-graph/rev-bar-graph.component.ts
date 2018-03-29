@@ -48,6 +48,8 @@ export class RevBarGraphComponent implements OnInit {
   xLabel: any;
   flag: boolean = true;
   valueType: string;
+  t: any;
+  newData: any;
 
   constructor(
     element: ElementRef,
@@ -70,13 +72,13 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   setMinAndMax() {
-    this.min = this.d3.min(this.rectData, d => {
+    this.min = this.d3.min(this.newData, d => {
       return d['height'];
     });
-    this.max = this.d3.max(this.rectData, d => {
+    this.max = this.d3.max(this.newData, d => {
       return d['height'];
     })
-    this.extent = this.d3.extent(this.rectData, d => {
+    this.extent = this.d3.extent(this.newData, d => {
       return d['height'];
     })
   }
@@ -89,7 +91,7 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   buildScaleBandDomain() {
-    this.x.domain(this.rectData.map(d => { return d.month}));
+    this.x.domain(this.newData.map(d => { return d.month}));
   }
 
   setOrdinalScale() {
@@ -105,7 +107,7 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   buildScaleDomain() {
-    let extent = this.d3.extent(this.rectData, d => {return d[this.valueType]});
+    let extent = this.d3.extent(this.newData, d => {return d[this.valueType]});
     let x = parseInt(extent[0]);
     let y = parseInt(extent[1]);
     this.y.domain([x, y]);
@@ -119,11 +121,13 @@ export class RevBarGraphComponent implements OnInit {
         d.revenue = +d.revenue;
         d.profit = +d.profit;
       });
-      console.log('this rect data', this.rectData);
       this.buildScales();
       this.scaleBand();
       this.generateAxises();
       this.d3.interval(d => {
+        //this.newData = this.rectData;
+        this.newData = this.flag ? this.rectData : this.rectData.slice(1);
+        console.log('this.rect data', this.newData)
         this.update();
         this.flag = !this.flag;
       }, 1000);
@@ -133,13 +137,14 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   update() {
-    this.valueType = this.flag ? 'revenue' : 'profit';
-    console.log('valueType', this.valueType);
+    //this.valueType = this.flag ? 'revenue' : 'profit';
+    this.valueType = 'revenue';
     this.setMinAndMax();
 
     this.buildScaleBandDomain();
     this.buildScaleDomain();
     this.generateAxisesCalls();
+    this.addTransition();
     this.buildRectangles();
     this.updateLabelText();
   }
@@ -148,9 +153,12 @@ export class RevBarGraphComponent implements OnInit {
     this.yLabel.text(this.valueType);
   }
 
+  addTransition() {
+    this.t = this.d3.transition().duration(750);
+  }
+
 
   generateLabels() {
-    console.log('labels')
     this.xLabel = this.g.append("text")
       .attr('class', 'x axis-label')
       .attr('x', this.width/ 2)
@@ -182,8 +190,8 @@ export class RevBarGraphComponent implements OnInit {
   }
 
   generateAxisesCalls() {
-    this.yAxisGroup.call(this.yAxisCall);
-    this.xAxisGroup.call(this.xAxisCall)
+    this.yAxisGroup.transition(this.t).call(this.yAxisCall);
+    this.xAxisGroup.transition(this.t).call(this.xAxisCall)
       .selectAll("text")
       .attr("y", '10')
       .attr("x", '-5')
@@ -204,31 +212,33 @@ export class RevBarGraphComponent implements OnInit {
 
     // data join
     var rectangles = this.g.selectAll('rect')
-      .data(this.rectData);
+      .data(this.rectData, d => {
+        return d.month;
+      });
 
     // exit old elements
-    rectangles.exit().remove();
-
-    // update
-    rectangles.attr('class', 'update')
-      .attr('x', (d, i) => {return this.x(d.month)})
-      .attr('y', d => {
-        console.log('revenue', d[this.valueType])
-        return this.y(d[this.valueType])})
-      .attr('width', this.x.bandwidth)
-      .attr('height', d => {return this.height - this.y(d[this.valueType])})
-      .attr('fill', 'red');
+    rectangles.exit()
+      .attr('fill', 'red')
+    .transition(this.t)
+      .attr('y', this.y(0))
+      .attr('height', 0)
+      .remove();
 
     // enter
     rectangles.enter()
       .append('rect')
+      .attr('y', d => this.y(0))
       .attr('x', (d, i) => {return this.x(d.month)})
-      .attr('y', d => {
-        console.log('revenue', d[this.valueType])
-        return this.y(d[this.valueType])})
       .attr('width', this.x.bandwidth)
-      .attr('height', d => {return this.height - this.y(d[this.valueType])})
-      .attr('fill', 'blue');
+      .attr('height', 0)
+      .attr('fill', 'blue')
+      .merge(rectangles)
+      .transition(this.t)
+          .attr('y', d => {return this.y(d[this.valueType])})
+          .attr('width', this.x.bandwidth)
+          .attr('x', (d, i) => {return this.x(d.month)})
+          .attr('height', d => {return this.height - this.y(d[this.valueType])})
+
   }
 
   buildCircles() {
