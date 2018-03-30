@@ -5,6 +5,8 @@ import {
   D3,
   Selection
 } from 'd3-ng2-service';
+import * as _ from 'lodash';
+import d3Tip from 'd3-tip';
 
 
 @Component({
@@ -46,14 +48,21 @@ export class MultiDimensionalComponent implements OnInit {
   valueType: string;
   t: any;
   newData: any;
+  filteredData: any;
   time: number = 0;
   legend: any;
+  tip: any;
+  interval: any;
+  buttonText: string = 'Play';
+  selectedAttribute: string = 'all';
+  minSlider: any;
+  maxSlider: any;
 
   constructor(
     element: ElementRef,
     private ngZone: NgZone,
     d3Service: D3Service,
-    private http: HttpClient
+    private http: HttpClient,
   ) {
     this.d3 = d3Service.getD3();
     this.parentNativeElement = element.nativeElement;
@@ -115,14 +124,50 @@ export class MultiDimensionalComponent implements OnInit {
       this.areaLinear();
       this.generateAxises();
       this.addLegend();
+
+      this.addSlider();
       this.d3.interval(d => {
-        this.time = (this.time < 214) ? this.time+1 : 0
-        this.update();
+
         this.flag = !this.flag;
       }, 100);
       this.generateLabels();
 
     },error =>{console.log('Error')});
+  }
+
+  addSlider() {
+
+    this.extent = this.d3.extent(this.rectData, d => {
+      return d['year'];
+    })
+    console.log('this extent', this.extent);
+    this.minSlider = this.extent[0];
+    this.maxSlider = this.extent[1];
+  }
+
+  step() {
+    this.time = (this.time < 214) ? this.time+1 : 0
+    this.update();
+  }
+
+  playVis() {
+    let element = this;
+    if  (this.buttonText === 'Play') {
+      this.interval = setInterval(() => {this.step();}, 100);
+    } else {
+      clearInterval(this.interval);
+    }
+
+    this.buttonText = (this.buttonText === 'Play') ? 'Pause' : 'Play';
+  }
+
+  resetVis() {
+    this.time = 0;
+    this.update();
+  }
+
+  setAttribute(value) {
+      this.selectedAttribute = value;
   }
 
   addLegend() {
@@ -183,9 +228,22 @@ export class MultiDimensionalComponent implements OnInit {
 
     this.generateAxisesCalls();
     this.addTransition();
+    this.filterBasedOnSelection();
     this.buildRectangles();
     this.buildScaleDomain();
     this.updateLabelText();
+  }
+
+  filterBasedOnSelection() {
+    const element = this;
+    this.filteredData = _.clone(this.newData)
+    this.filteredData[this.time] =  this.filteredData[this.time].filter(d => {
+      if (element.selectedAttribute === 'all') {return true;}
+      else {
+        return d.continent === element.selectedAttribute;
+      }
+    });
+
   }
 
   updateLabelText() {
@@ -260,7 +318,7 @@ export class MultiDimensionalComponent implements OnInit {
 
     // data join
     var circles = this.g.selectAll('circle')
-      .data(this.newData[this.time], d => {
+      .data(this.filteredData[this.time], d => {
         return  d.country;
       });
 

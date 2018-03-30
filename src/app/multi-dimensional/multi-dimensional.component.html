@@ -1,3 +1,22 @@
-<p>
-  multi-dimensional works!
-</p>
+
+<mat-slider
+  class="example-margin"
+  [max]="maxSlider"
+  [min]="minSlider"
+  [step]="1">
+</mat-slider>
+<div>
+  <button id="play-button" (click)="playVis()">{{buttonText}}</button>
+  <button id="reset-button" (click)="resetVis()">reset</button>
+</div>
+<select #t (change)="setAttribute(t.value)">
+  <option selected value="all">all</option>
+  <option value="europe">europe</option>
+  <option value="asia">asia</option>
+  <option value="americas">americas</option>
+  <option svalue="africa">africa</option>
+</select>
+
+
+
+<div id="canvas" width="400" height="60"></div>
