@@ -78,6 +78,13 @@ export class MultiDimensionalComponent implements OnInit {
 
   }
 
+  onInputChange(sliderEvent) {
+    let sliderValue = sliderEvent.value
+    console.log('value', sliderValue);
+    this.time = sliderValue;
+    this.update();
+  }
+
   setMinAndMax() {
     this.min = this.d3.min(this.newData, d => {
       return d['height'];
@@ -130,7 +137,10 @@ export class MultiDimensionalComponent implements OnInit {
 
         this.flag = !this.flag;
       }, 100);
+
       this.generateLabels();
+      this.resetVis();
+      this.resetVis();
 
     },error =>{console.log('Error')});
   }
@@ -162,12 +172,13 @@ export class MultiDimensionalComponent implements OnInit {
   }
 
   resetVis() {
-    this.time = 0;
+    this.time = +this.extent[0];
     this.update();
   }
 
   setAttribute(value) {
       this.selectedAttribute = value;
+      this.update();
   }
 
   addLegend() {
@@ -202,19 +213,20 @@ export class MultiDimensionalComponent implements OnInit {
   }
 
   formatData() {
-
-
     let thisData =  this.rectData.map(function(year){
-      return year["countries"].filter(function(country){
+      let filteredCountries = year["countries"].filter(function(country){
         return (country.income && country.life_exp);
-      })
+      }).map(function(country){
+        country.income = +country.income;
+        country.life_exp = +country.life_exp;
+        return country;
+      });
+      return {
+        countries: filteredCountries,
+        year: +year['year']
+      };
     });
-    let newData = thisData.map(function(country){
-      country.income = +country.income;
-      country.life_exp = +country.life_exp;
-      return country;
-    })
-    return newData;
+    return thisData;
 
 
   }
@@ -223,6 +235,7 @@ export class MultiDimensionalComponent implements OnInit {
     //this.valueType = this.flag ? 'revenue' : 'profit';
     this.valueType = 'revenue';
     //this.setMinAndMax();
+    console.log('update');
 
     this.buildScaleBandDomain();
 
@@ -237,7 +250,9 @@ export class MultiDimensionalComponent implements OnInit {
   filterBasedOnSelection() {
     const element = this;
     this.filteredData = _.clone(this.newData)
-    this.filteredData[this.time] =  this.filteredData[this.time].filter(d => {
+    let filterSet = _.find(this.filteredData, {year: this.time});
+    console.log('filter set', filterSet);
+    this.filteredData = filterSet['countries'].filter(d => {
       if (element.selectedAttribute === 'all') {return true;}
       else {
         return d.continent === element.selectedAttribute;
@@ -318,7 +333,7 @@ export class MultiDimensionalComponent implements OnInit {
 
     // data join
     var circles = this.g.selectAll('circle')
-      .data(this.filteredData[this.time], d => {
+      .data(this.filteredData, d => {
         return  d.country;
       });
 
@@ -341,7 +356,7 @@ export class MultiDimensionalComponent implements OnInit {
       .attr('cx', d => {return this.x(d.income)})
       .attr('r', d => {return Math.sqrt(this.area(d.population)/ Math.PI)})
 
-    this.timeLabel.text(+(this.time + 1800));
+    this.timeLabel.text(+(this.time));
   }
 
 
