@@ -156,7 +156,7 @@ export class MultiDimensionalComponent implements OnInit {
   }
 
   step() {
-    this.time = (this.time < 214) ? this.time+1 : 0
+    this.time = (this.time < +this.extent[1]) ? this.time+1 : +this.extent[0]
     this.update();
   }
 
